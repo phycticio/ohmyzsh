@@ -11,12 +11,26 @@ function sync_media {
         return 1
     fi
 
-    local remote_user="javo"
-    local remote_host="192.168.1.120"
+    local dir="${HOME}/.oh-my-zsh/custom"
+    local env_file="${dir}/.env"
+
+    if [ ! -f "$env_file" ]; then
+        echo "Error: Missing config file: $env_file"
+        return 1
+    fi
+
+    source "$env_file"
+
+    if [ -z "${MEDIA_REMOTE_USER:-}" ] || [ -z "${MEDIA_REMOTE_HOST:-}" ] || [ -z "${MEDIA_SSH_KEY:-}" ]; then
+        echo "Error: MEDIA_REMOTE_USER, MEDIA_REMOTE_HOST, and MEDIA_SSH_KEY must be set in $env_file"
+        return 1
+    fi
+
     local remote_path="$2"
     local local_path="$1"
 
-    rsync -avz --progress -e "ssh -i ~/.ssh/javotroya" "${local_path}" "${remote_user}@${remote_host}:${remote_path}"
+    echo "Starting transfer of ${local_path} to ${MEDIA_REMOTE_USER}@${MEDIA_REMOTE_HOST}:${remote_path} using ${MEDIA_SSH_KEY} SSH key"
+    rsync -avz --progress -e "ssh -i ${MEDIA_SSH_KEY}" "${local_path}" "${MEDIA_REMOTE_USER}@${MEDIA_REMOTE_HOST}:${remote_path}"
     
     echo "Transfer of ${local_path} completed."
 }
